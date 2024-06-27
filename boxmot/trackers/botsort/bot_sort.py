@@ -189,9 +189,6 @@ class STrack(BaseTrack):
 class BoTSORT(BaseTracker):
     def __init__(
         self,
-        model_weights,
-        device,
-        fp16,
         per_class=False,
         track_high_thresh: float = 0.5,
         track_low_thresh: float = 0.1,
@@ -224,12 +221,6 @@ class BoTSORT(BaseTracker):
         self.appearance_thresh = appearance_thresh
 
         self.with_reid = with_reid
-        if self.with_reid:
-            rab = ReidAutoBackend(
-                weights=model_weights, device=device, half=fp16
-            )
-            self.model = rab.get_backend()
-
         self.cmc = SOF()
         self.fuse_first_associate = fuse_first_associate
 
@@ -266,15 +257,7 @@ class BoTSORT(BaseTracker):
         # find first round association detections
         first_mask = confs > self.track_high_thresh
         dets_first = dets[first_mask]
-
-        """Extract embeddings """
-        # appearance descriptor extraction
-        if self.with_reid:
-            if embs is not None:
-                features_high = embs
-            else:
-                # (Ndets x X) [512, 1024, 2048]
-                features_high = self.model.get_features(dets_first[:, 0:4], img)
+        features_high = embs
 
         if len(dets) > 0:
             """Detections"""
